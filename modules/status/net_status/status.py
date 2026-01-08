@@ -1,0 +1,51 @@
+import speedtest
+import time
+import sys
+import threading
+
+def fetcher(fetching_flag):
+    dots = ["...", "..", ".", " "]
+    i = 0
+
+    while fetching_flag[0]:
+        sys.stdout.write(f"\rFetching{dots[i%4]} ")
+        sys.stdout.flush()
+        time.sleep(0.5)
+        i+=1
+    sys.stdout.write("\r" + " " * 20 + "\r")
+    sys.stdout.flush
+
+def net_status():
+    fetching_flag = [True]
+    t = threading.Thread(target=fetcher, args=(fetching_flag,))
+    t.start()
+
+    try:
+        st = speedtest.Speedtest(secure=True)
+        st.get_best_server()
+        download = round(st.download() / 1000000, 2)
+        upload = round(st.upload() / 1000000, 2)
+        ping = round(st.results.ping)
+
+        fetching_flag[0] = False
+        t.join()
+
+        print("=== Network Information ===")
+        print("Online: True")
+        print(f"Download: {download} mbps")
+        print(f"Upload: {upload} mbps")
+        print(f"Ping: {ping} ms")
+
+    except Exception:
+
+        fetching_flag[0] = False
+        t.join()
+
+        print("=== Net Status ===")
+        print("Online: False")
+        print("Download: 0")
+        print("Upload: 0")
+        print("Ping: Not Available")
+
+if __name__ == "__main__":
+    net_status()
